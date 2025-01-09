@@ -24,6 +24,6 @@ jobs:
           COMMIT_MESSAGE=$(git log -1 --pretty=format:'%s')
           COMMIT_AUTHOR=$(git log -1 --pretty=format:'%an')
           COMMIT_URL=${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}
-          COMMIT_DIFF=$(git show --pretty="" --name-only ${{ github.sha }} | xargs -I {} sh -c 'echo "\nFile: {}"; git diff ${{ github.sha }}^ ${{ github.sha }} -- {} | head -n 10')
+          
           MESSAGE="Nuovo commit nel repository: ${{ github.repository }}.\n\nCommit: ${{ github.sha }}\nAutore: $COMMIT_AUTHOR\nMessaggio: $COMMIT_MESSAGE\nLink: $COMMIT_URL\n\n
           curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendMessage -d chat_id=${{ secrets.TELEGRAM_CHAT_ID }} -d text="$(echo -e "$MESSAGE" | jq -s -R -r @uri)"
