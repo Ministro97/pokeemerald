@@ -16,14 +16,20 @@ jobs:
       - name: Get commit count with keywords
         id: commit_count_keywords
         run: |
-          COMMIT_COUNT_GRAFICA=$(git log --grep="grafica" --oneline | wc -l)
-          COMMIT_COUNT_GAMEPLAY=$(git log --grep="gameplay" --oneline | wc -l)
-          COMMIT_COUNT_STORIA=$(git log --grep="storia" --oneline | wc -l)
-          COMMIT_COUNT_META=$(git log --grep="meta" --oneline | wc -l)
+          COMMIT_COUNT_GRAFICA=$(git log --grep="#Grafica" --oneline | wc -l)
+          COMMIT_COUNT_GAMEPLAY=$(git log --grep="#Gameplay" --oneline | wc -l)
+          COMMIT_COUNT_STORIA=$(git log --grep="#Storia" --oneline | wc -l)
+          COMMIT_COUNT_META=$(git log --grep="#Meta" --oneline | wc -l)
           echo "::set-output name=count_grafica::$COMMIT_COUNT_GRAFICA"
           echo "::set-output name=count_gameplay::$COMMIT_COUNT_GAMEPLAY"
           echo "::set-output name=count_storia::$COMMIT_COUNT_STORIA"
           echo "::set-output name=count_meta::$COMMIT_COUNT_META"
+
+      - name: Get modified files
+        id: modified_files
+        run: |
+          MODIFIED_FILES=$(git diff --name-only HEAD~1 HEAD)
+          echo "::set-output name=files::$MODIFIED_FILES"
 
       - name: Send message to Telegram
         env:
@@ -37,4 +43,5 @@ jobs:
           COMMIT_COUNT_GAMEPLAY=${{ steps.commit_count_keywords.outputs.count_gameplay }}
           COMMIT_COUNT_STORIA=${{ steps.commit_count_keywords.outputs.count_storia }}
           COMMIT_COUNT_META=${{ steps.commit_count_keywords.outputs.count_meta }}
-          curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendMessage -d chat_id=${{ secrets.TELEGRAM_CHAT_ID }} -d text="Nuovo commit nel repository: ${{ github.repository }}.\n\nCommit: ${{ github.sha }}\nAutore: $COMMIT_AUTHOR\nMessaggio: $COMMIT_MESSAGE\nLink: $COMMIT_URL\nNumero di commit con parole chiave:\n- Grafica: $COMMIT_COUNT_GRAFICA\n- Gameplay: $COMMIT_COUNT_GAMEPLAY\n- Storia: $COMMIT_COUNT_STORIA\n- Meta: $COMMIT_COUNT_META"
+          MODIFIED_FILES=${{ steps.modified_files.outputs.files }}
+          curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendMessage -d chat_id=${{ secrets.TELEGRAM_CHAT_ID }} -d text="Nuovo commit nel repository: ${{ github.repository }}.\n\nCommit: ${{ github.sha }}\nAutore: $COMMIT_AUTHOR\nMessaggio: $COMMIT_MESSAGE\nLink: $COMMIT_URL\nNumero di commit con parole chiave:\n- Grafica: $COMMIT_COUNT_GRAFICA\n- Gameplay: $COMMIT_COUNT_GAMEPLAY\n- Storia: $COMMIT_COUNT_STORIA\n- Meta: $COMMIT_COUNT_META\n\nFile modificati:\n$MODIFIED_FILES"
