@@ -1,6 +1,6 @@
 #ifndef GUARD_APPRENTICE_H
 #define GUARD_APPRENTICE_H
-
+//esempio
 #include "constants/apprentice.h"
 
 struct ApprenticeTrainer
