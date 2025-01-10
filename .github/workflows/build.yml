@@ -26,12 +26,12 @@ jobs:
       - name: Get commit count with keywords
         id: commit_count_keywords
         run: |
-          COUNTS=${{ steps.read_counts.outputs.counts }}
+          COUNTS='${{ steps.read_counts.outputs.counts }}'
           COMMIT_COUNT_GRAFICA=$(git log --grep="grafica" -i --oneline | wc -l)
           COMMIT_COUNT_GAMEPLAY=$(git log --grep="gameplay" -i --oneline | wc -l)
           COMMIT_COUNT_STORIA=$(git log --grep="storia" -i --oneline | wc -l)
           COMMIT_COUNT_META=$(git log --grep="meta" -i --oneline | wc -l)
-          NEW_COUNTS=$(echo $COUNTS | jq --argjson grafica $COMMIT_COUNT_GRAFICA --argjson gameplay $COMMIT_COUNT_GAMEPLAY --argjson storia $COMMIT_COUNT_STORIA --argjson meta $COMMIT_COUNT_META '.grafica += $grafica | .gameplay += $gameplay | .storia += $storia | .meta += $meta')
+          NEW_COUNTS=$(echo $COUNTS | jq --argjson grafica $COMMIT_COUNT_GRAFICA --argjson gameplay $COMMIT_COUNT_GAMEPLAY --argjson storia $COMMIT_COUNT_STORIA --argjson meta $COMMIT_COUNT_META '.grafica += ($grafica | tonumber) | .gameplay += ($gameplay | tonumber) | .storia += ($storia | tonumber) | .meta += ($meta | tonumber)')
           echo $NEW_COUNTS > keyword_commit_counts.json
           echo "::set-output name=new_counts::$NEW_COUNTS"
 
