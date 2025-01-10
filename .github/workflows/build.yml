@@ -16,17 +16,15 @@ jobs:
       - name: Get original commit details
         id: original_commit
         run: |
-          ORIGINAL_COMMIT_MESSAGE=$(git log -1 --pretty=format:'%s')
-          ORIGINAL_COMMIT_DESCRIPTION=$(git log -1 --pretty=format:'%b')
-          ORIGINAL_COMMIT_AUTHOR=$(git log -1 --pretty=format:'%an')
+          ORIGINAL_COMMIT_SHA=$(git rev-parse HEAD)
+          ORIGINAL_COMMIT_MESSAGE=$(git log -1 --pretty=format:'%s' $ORIGINAL_COMMIT_SHA)
+          ORIGINAL_COMMIT_DESCRIPTION=$(git log -1 --pretty=format:'%b' $ORIGINAL_COMMIT_SHA)
+          ORIGINAL_COMMIT_AUTHOR=$(git log -1 --pretty=format:'%an' $ORIGINAL_COMMIT_SHA)
+          MODIFIED_FILES=$(git diff-tree --no-commit-id --name-only -r $ORIGINAL_COMMIT_SHA)
+          echo "::set-output name=sha::$ORIGINAL_COMMIT_SHA"
           echo "::set-output name=message::$ORIGINAL_COMMIT_MESSAGE"
           echo "::set-output name=description::$ORIGINAL_COMMIT_DESCRIPTION"
           echo "::set-output name=author::$ORIGINAL_COMMIT_AUTHOR"
-
-      - name: Get modified files
-        id: modified_files
-        run: |
-          MODIFIED_FILES=$(git diff-tree --no-commit-id --name-only -r ${{ github.sha }})
           echo "::set-output name=files::$MODIFIED_FILES"
 
       - name: Read keyword commit counts
@@ -72,15 +70,16 @@ jobs:
           TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
+          ORIGINAL_COMMIT_SHA=${{ steps.original_commit.outputs.sha }}
           ORIGINAL_COMMIT_MESSAGE=${{ steps.original_commit.outputs.message }}
           ORIGINAL_COMMIT_DESCRIPTION=${{ steps.original_commit.outputs.description }}
           ORIGINAL_COMMIT_AUTHOR=${{ steps.original_commit.outputs.author }}
-          COMMIT_URL=${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}
+          COMMIT_URL=${{ github.server_url }}/${{ github.repository }}/commit/$ORIGINAL_COMMIT_SHA
           COUNTS=$(cat keyword_commit_counts.json)
           COMMIT_COUNT_GRAFICA=$(echo $COUNTS | jq '.grafica')
           COMMIT_COUNT_GAMEPLAY=$(echo $COUNTS | jq '.gameplay')
           COMMIT_COUNT_STORIA=$(echo $COUNTS | jq '.storia')
           COMMIT_COUNT_META=$(echo $COUNTS | jq '.meta')
-          MODIFIED_FILES=${{ steps.modified_files.outputs.files }}
-          MESSAGE=$(printf "Nuovo commit nel repository: ${{ github.repository }}.\n\nCommit: ${{ github.sha }}\nAutore: $ORIGINAL_COMMIT_AUTHOR\nMessaggio: $ORIGINAL_COMMIT_MESSAGE\nDescrizione: $ORIGINAL_COMMIT_DESCRIPTION\nLink: $COMMIT_URL\n\nNumero di commit con parole chiave:\n- Grafica: $COMMIT_COUNT_GRAFICA\n- Gameplay: $COMMIT_COUNT_GAMEPLAY\n- Storia: $COMMIT_COUNT_STORIA\n- Meta: $COMMIT_COUNT_META\n\nFile modificati:\n$MODIFIED_FILES")
+          MODIFIED_FILES=${{ steps.original_commit.outputs.files }}
+          MESSAGE=$(printf "Nuovo commit nel repository: ${{ github.repository }}.\n\nCommit: $ORIGINAL_COMMIT_SHA\nAutore: $ORIGINAL_COMMIT_AUTHOR\nMessaggio: $ORIGINAL_COMMIT_MESSAGE\nDescrizione: $ORIGINAL_COMMIT_DESCRIPTION\nLink: $COMMIT_URL\n\nNumero di commit con parole chiave:\n- Grafica: $COMMIT_COUNT_GRAFICA\n- Gameplay: $COMMIT_COUNT_GAMEPLAY\n- Storia: $COMMIT_COUNT_STORIA\n- Meta: $COMMIT_COUNT_META\n\nFile modificati:\n$MODIFIED_FILES")
           curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendMessage -d chat_id=${{ secrets.TELEGRAM_CHAT_ID }} -d text="$MESSAGE"
