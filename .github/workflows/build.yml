@@ -13,17 +13,35 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
 
+      - name: Read keyword commit counts
+        id: read_counts
+        run: |
+          if [ -f keyword_commit_counts.json ]; then
+            COUNTS=$(cat keyword_commit_counts.json)
+          else
+            COUNTS='{"grafica":0,"gameplay":0,"storia":0,"meta":0}'
+          fi
+          echo "::set-output name=counts::$COUNTS"
+
       - name: Get commit count with keywords
         id: commit_count_keywords
         run: |
+          COUNTS=${{ steps.read_counts.outputs.counts }}
           COMMIT_COUNT_GRAFICA=$(git log --grep="grafica" -i --oneline | wc -l)
           COMMIT_COUNT_GAMEPLAY=$(git log --grep="gameplay" -i --oneline | wc -l)
           COMMIT_COUNT_STORIA=$(git log --grep="storia" -i --oneline | wc -l)
           COMMIT_COUNT_META=$(git log --grep="meta" -i --oneline | wc -l)
-          echo "::set-output name=count_grafica::$COMMIT_COUNT_GRAFICA"
-          echo "::set-output name=count_gameplay::$COMMIT_COUNT_GAMEPLAY"
-          echo "::set-output name=count_storia::$COMMIT_COUNT_STORIA"
-          echo "::set-output name=count_meta::$COMMIT_COUNT_META"
+          NEW_COUNTS=$(echo $COUNTS | jq '.grafica += $COMMIT_COUNT_GRAFICA | .gameplay += $COMMIT_COUNT_GAMEPLAY | .storia += $COMMIT_COUNT_STORIA | .meta += $COMMIT_COUNT_META')
+          echo $NEW_COUNTS > keyword_commit_counts.json
+          echo "::set-output name=new_counts::$NEW_COUNTS"
+
+      - name: Commit updated counts
+        run: |
+          git config --global user.name 'github-actions'
+          git config --global user.email 'github-actions@github.com'
+          git add keyword_commit_counts.json
+          git commit -m "Aggiorna conteggi commit parole chiave"
+          git push
 
       - name: Get modified files
         id: modified_files
@@ -39,9 +57,6 @@ jobs:
           COMMIT_MESSAGE=$(git log -1 --pretty=format:'%s')
           COMMIT_AUTHOR=$(git log -1 --pretty=format:'%an')
           COMMIT_URL=${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}
-          COMMIT_COUNT_GRAFICA=${{ steps.commit_count_keywords.outputs.count_grafica }}
-          COMMIT_COUNT_GAMEPLAY=${{ steps.commit_count_keywords.outputs.count_gameplay }}
-          COMMIT_COUNT_STORIA=${{ steps.commit_count_keywords.outputs.count_storia }}
-          COMMIT_COUNT_META=${{ steps.commit_count_keywords.outputs.count_meta }}
+          NEW_COUNTS=${{ steps.commit_count_keywords.outputs.new_counts }}
           MODIFIED_FILES=${{ steps.modified_files.outputs.files }}
-          curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendMessage -d chat_id=${{ secrets.TELEGRAM_CHAT_ID }} -d text="Nuovo commit nel repository: ${{ github.repository }}.\n\nCommit: ${{ github.sha }}\nAutore: $COMMIT_AUTHOR\nMessaggio: $COMMIT_MESSAGE\nLink: $COMMIT_URL\nNumero di commit con parole chiave:\n- Grafica: $COMMIT_COUNT_GRAFICA\n- Gameplay: $COMMIT_COUNT_GAMEPLAY\n- Storia: $COMMIT_COUNT_STORIA\n- Meta: $COMMIT_COUNT_META\n\nFile modificati:\n$MODIFIED_FILES"
+          curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendMessage -d chat_id=${{ secrets.TELEGRAM_CHAT_ID }} -d text="Nuovo commit nel repository: ${{ github.repository }}.\n\nCommit: ${{ github.sha }}\nAutore: $COMMIT_AUTHOR\nMessaggio: $COMMIT_MESSAGE\nLink: $COMMIT_URL\nNumero di commit con parole chiave:\n- Grafica: $(echo $NEW_COUNTS | jq '.grafica')\n- Gameplay: $(echo $NEW_COUNTS | jq '.gameplay')\n- Storia: $(echo $NEW_COUNTS | jq '.storia')\n- Meta: $(echo $NEW_COUNTS | jq '.meta')\n\nFile modificati:\n$MODIFIED_FILES"
