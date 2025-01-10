@@ -1,6 +1,6 @@
 #ifndef GUARD_GBA_GBA_H
 #define GUARD_GBA_GBA_H
-
+//ciao
 #include "gba/defines.h"
 #include "gba/io_reg.h"
 #include "gba/types.h"
