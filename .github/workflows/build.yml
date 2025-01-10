@@ -3,7 +3,7 @@ name: Notify Telegram
 on:
   push:
     branches:
-      - master  # Sostituisci con il branch che desideri monitorare
+      - main  # Sostituisci con il branch che desideri monitorare
 
 jobs:
   notify:
@@ -31,7 +31,7 @@ jobs:
           COMMIT_COUNT_GAMEPLAY=$(git log --grep="gameplay" -i --oneline | wc -l)
           COMMIT_COUNT_STORIA=$(git log --grep="storia" -i --oneline | wc -l)
           COMMIT_COUNT_META=$(git log --grep="meta" -i --oneline | wc -l)
-          NEW_COUNTS=$(echo $COUNTS | jq '.grafica += $COMMIT_COUNT_GRAFICA | .gameplay += $COMMIT_COUNT_GAMEPLAY | .storia += $COMMIT_COUNT_STORIA | .meta += $COMMIT_COUNT_META')
+          NEW_COUNTS=$(echo $COUNTS | jq --argjson grafica $COMMIT_COUNT_GRAFICA --argjson gameplay $COMMIT_COUNT_GAMEPLAY --argjson storia $COMMIT_COUNT_STORIA --argjson meta $COMMIT_COUNT_META '.grafica += $grafica | .gameplay += $gameplay | .storia += $storia | .meta += $meta')
           echo $NEW_COUNTS > keyword_commit_counts.json
           echo "::set-output name=new_counts::$NEW_COUNTS"
 
