@@ -31,8 +31,14 @@ jobs:
           COMMIT_COUNT_GAMEPLAY=$(git log --grep="gameplay" -i --oneline | wc -l)
           COMMIT_COUNT_STORIA=$(git log --grep="storia" -i --oneline | wc -l)
           COMMIT_COUNT_META=$(git log --grep="meta" -i --oneline | wc -l)
+          echo "COMMIT_COUNT_GRAFICA=$COMMIT_COUNT_GRAFICA"
+          echo "COMMIT_COUNT_GAMEPLAY=$COMMIT_COUNT_GAMEPLAY"
+          echo "COMMIT_COUNT_STORIA=$COMMIT_COUNT_STORIA"
+          echo "COMMIT_COUNT_META=$COMMIT_COUNT_META"
           NEW_COUNTS=$(echo $COUNTS | jq --argjson grafica $COMMIT_COUNT_GRAFICA --argjson gameplay $COMMIT_COUNT_GAMEPLAY --argjson storia $COMMIT_COUNT_STORIA --argjson meta $COMMIT_COUNT_META '.grafica += ($grafica | tonumber) | .gameplay += ($gameplay | tonumber) | .storia += ($storia | tonumber) | .meta += ($meta | tonumber)')
+          echo "NEW_COUNTS=$NEW_COUNTS"
           echo $NEW_COUNTS > keyword_commit_counts.json
+          cat keyword_commit_counts.json
           echo "::set-output name=new_counts::$NEW_COUNTS"
 
       - name: Commit updated counts
