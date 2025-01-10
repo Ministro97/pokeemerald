@@ -3,7 +3,7 @@ name: Notify Telegram
 on:
   push:
     branches:
-      - master # Sostituisci con il branch che desideri monitorare
+      - master  # Sostituisci con il branch che desideri monitorare
 
 jobs:
   notify:
@@ -53,6 +53,10 @@ jobs:
           NEW_COUNTS=$(echo $COUNTS | jq --argjson grafica $COMMIT_COUNT_GRAFICA --argjson gameplay $COMMIT_COUNT_GAMEPLAY --argjson storia $COMMIT_COUNT_STORIA --argjson meta $COMMIT_COUNT_META '.grafica += ($grafica | tonumber) | .gameplay += ($gameplay | tonumber) | .storia += ($storia | tonumber) | .meta += ($meta | tonumber)')
           echo $NEW_COUNTS > keyword_commit_counts.json
           echo "NEW_COUNTS=$NEW_COUNTS" >> $GITHUB_ENV
+
+      - name: Validate JSON format
+        run: |
+          echo $NEW_COUNTS | jq . > /dev/null
 
       - name: Get commit author
         id: commit_author
