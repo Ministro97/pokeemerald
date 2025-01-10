@@ -1,4 +1,4 @@
-# Pokémon Emerald x
+# Pokémon Emerald xx
 
 This is a decompilation of PokémonEmerald.
 
