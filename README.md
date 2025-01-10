@@ -1,6 +1,6 @@
 # Pokémon Emerald x
 
-This is a decompilation of Pokémon Emerald.
+This is a decompilation of PokémonEmerald.
 
 It builds the following ROM:
 
