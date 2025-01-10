@@ -3,7 +3,7 @@ name: Notify Telegram
 on:
   push:
     branches:
-      - master  # Sostituisci con il branch che desideri monitorare
+      - master # Sostituisci con il branch che desideri monitorare
 
 jobs:
   notify:
@@ -27,12 +27,13 @@ jobs:
 
       - name: Get modified files
         id: modified_files
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          if git rev-parse --verify HEAD~1 >/dev/null 2>&1; then
-            MODIFIED_FILES=$(git diff --name-only HEAD~1 HEAD)
-          else
-            MODIFIED_FILES=$(git diff --name-only HEAD)
-          fi
+          COMMIT_SHA=${{ steps.original_commit.outputs.sha }}
+          REPO=${{ github.repository }}
+          MODIFIED_FILES=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
+            "https://api.github.com/repos/$REPO/commits/$COMMIT_SHA" | jq -r '.files[].filename')
           echo "::set-output name=files::$MODIFIED_FILES"
 
       - name: Read keyword commit counts
