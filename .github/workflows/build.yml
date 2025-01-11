@@ -3,7 +3,7 @@ name: Notify Telegram
 on:
   push:
     branches:
-      - master # Sostituisci con il branch che desideri monitorare
+      - master
 
 jobs:
   notify:
@@ -42,7 +42,7 @@ jobs:
           if [ -f keyword_commit_counts.json ]; then
             COUNTS=$(cat keyword_commit_counts.json)
           else
-            COUNTS='{"grafica":0,"gameplay":0,"storia":0,"meta":0}'
+            COUNTS='{"design":0,"gameplay":0,"narrativa":0,"performance":0,"audio":0}'
           fi
           echo "::set-output name=counts::$COUNTS"
 
@@ -50,11 +50,12 @@ jobs:
         id: commit_count_keywords
         run: |
           COUNTS='${{ steps.read_counts.outputs.counts }}'
-          COMMIT_COUNT_GRAFICA=$(git log --grep="grafica" -i --oneline | wc -l)
+          COMMIT_COUNT_DESIGN=$(git log --grep="design" -i --oneline | wc -l)
           COMMIT_COUNT_GAMEPLAY=$(git log --grep="gameplay" -i --oneline | wc -l)
-          COMMIT_COUNT_STORIA=$(git log --grep="storia" -i --oneline | wc -l)
-          COMMIT_COUNT_META=$(git log --grep="meta" -i --oneline | wc -l)
-          NEW_COUNTS=$(echo $COUNTS | jq --argjson grafica $COMMIT_COUNT_GRAFICA --argjson gameplay $COMMIT_COUNT_GAMEPLAY --argjson storia $COMMIT_COUNT_STORIA --argjson meta $COMMIT_COUNT_META '.grafica += ($grafica | tonumber) | .gameplay += ($gameplay | tonumber) | .storia += ($storia | tonumber) | .meta += ($meta | tonumber)')
+          COMMIT_COUNT_NARRATIVA=$(git log --grep="narrativa" -i --oneline | wc -l)
+          COMMIT_COUNT_PERFORMANCE=$(git log --grep="performance" -i --oneline | wc -l)
+          COMMIT_COUNT_AUDIO=$(git log --grep="audio" -i --oneline | wc -l)
+          NEW_COUNTS=$(echo $COUNTS | jq --argjson design $COMMIT_COUNT_DESIGN --argjson gameplay $COMMIT_COUNT_GAMEPLAY --argjson narrativa $COMMIT_COUNT_NARRATIVA --argjson performance $COMMIT_COUNT_PERFORMANCE --argjson audio $COMMIT_COUNT_AUDIO '.design += ($design | tonumber) | .gameplay += ($gameplay | tonumber) | .narrativa += ($narrativa | tonumber) | .performance += ($performance | tonumber) | .audio += ($audio | tonumber)')
           echo $NEW_COUNTS > keyword_commit_counts.json
           echo "::set-output name=new_counts::$NEW_COUNTS"
 
@@ -85,11 +86,12 @@ jobs:
           ORIGINAL_COMMIT_AUTHOR="${{ steps.original_commit.outputs.author }}"
           COMMIT_URL="${{ github.server_url }}/${{ github.repository }}/commit/$ORIGINAL_COMMIT_SHA"
           COUNTS=$(cat keyword_commit_counts.json)
-          COMMIT_COUNT_GRAFICA=$(echo $COUNTS | jq '.grafica')
+          COMMIT_COUNT_DESIGN=$(echo $COUNTS | jq '.design')
           COMMIT_COUNT_GAMEPLAY=$(echo $COUNTS | jq '.gameplay')
-          COMMIT_COUNT_STORIA=$(echo $COUNTS | jq '.storia')
-          COMMIT_COUNT_META=$(echo $COUNTS | jq '.meta')
+          COMMIT_COUNT_NARRATIVA=$(echo $COUNTS | jq '.narrativa')
+          COMMIT_COUNT_PERFORMANCE=$(echo $COUNTS | jq '.performance')
+          COMMIT_COUNT_AUDIO=$(echo $COUNTS | jq '.audio')
           MODIFIED_FILES="${{ steps.modified_files.outputs.files }}"
-          MESSAGE=$(printf "Nuovo commit nel repository: ${{ github.repository }}.\n\n*Commit:* $ORIGINAL_COMMIT_SHA\n\n*Autore:* $ORIGINAL_COMMIT_AUTHOR\n\n*Messaggio:* $ORIGINAL_COMMIT_MESSAGE\n\n*Descrizione:* $ORIGINAL_COMMIT_DESCRIPTION\n\n*Link:* $COMMIT_URL\n\n*Numero di commit con parole chiave:*\n\n- Grafica: $COMMIT_COUNT_GRAFICA\n- Gameplay: $COMMIT_COUNT_GAMEPLAY\n- Storia: $COMMIT_COUNT_STORIA\n- Meta: $COMMIT_COUNT_META\n\n*File modificati:*\n\n$MODIFIED_FILES")
+          MESSAGE=$(printf "Nuovo commit nel repository: ${{ github.repository }}.\n\n*Commit:* $ORIGINAL_COMMIT_SHA\n\n*Autore:* $ORIGINAL_COMMIT_AUTHOR\n\n*Messaggio:* $ORIGINAL_COMMIT_MESSAGE\n\n*Descrizione:* $ORIGINAL_COMMIT_DESCRIPTION\n\n*Link:* $COMMIT_URL\n\n*Numero di commit con parole chiave:*\n\n- Design: $COMMIT_COUNT_DESIGN\n- Gameplay: $COMMIT_COUNT_GAMEPLAY\n- Narrativa: $COMMIT_COUNT_NARRATIVA\n- Performance: $COMMIT_COUNT_PERFORMANCE\n- Audio: $COMMIT_COUNT_AUDIO\n\n*File modificati:*\n\n$MODIFIED_FILES")
           curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendMessage -d chat_id=${{ secrets.TELEGRAM_CHAT_ID }} -d text="$MESSAGE" -d parse_mode="Markdown"
           
