@@ -15,12 +15,16 @@ jobs:
 
       - name: Get original commit details
         id: original_commit
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          ORIGINAL_COMMIT_SHA=$(git rev-parse HEAD~1) # Riferimento al commit dell'utente
-          ORIGINAL_COMMIT_MESSAGE=$(git log -1 --pretty=format:'%s' $ORIGINAL_COMMIT_SHA)
-          ORIGINAL_COMMIT_DESCRIPTION=$(git log -1 --pretty=format:'%b' $ORIGINAL_COMMIT_SHA)
-          ORIGINAL_COMMIT_AUTHOR=$(git log -1 --pretty=format:'%an' $ORIGINAL_COMMIT_SHA)
-          echo "::set-output name=sha::$ORIGINAL_COMMIT_SHA"
+          COMMIT_SHA=$(jq -r .after $GITHUB_EVENT_PATH)
+          COMMIT_DETAILS=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
+            "https://api.github.com/repos/${{ github.repository }}/commits/$COMMIT_SHA")
+          ORIGINAL_COMMIT_MESSAGE=$(echo $COMMIT_DETAILS | jq -r .commit.message)
+          ORIGINAL_COMMIT_AUTHOR=$(echo $COMMIT_DETAILS | jq -r .commit.author.name)
+          ORIGINAL_COMMIT_DESCRIPTION=$(echo $COMMIT_DETAILS | jq -r .commit.message)
+          echo "::set-output name=sha::$COMMIT_SHA"
           echo "::set-output name=message::$ORIGINAL_COMMIT_MESSAGE"
           echo "::set-output name=description::$ORIGINAL_COMMIT_DESCRIPTION"
           echo "::set-output name=author::$ORIGINAL_COMMIT_AUTHOR"
