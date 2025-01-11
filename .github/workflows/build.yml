@@ -61,7 +61,7 @@ jobs:
       - name: Read keyword commit counts
         id: read_counts
         run: |
-          if [ -f keyword_commit_counts.json ]; then
+          if [ -f /docs/keyword_commit_counts.json ]; then
             COUNTS=$(cat keyword_commit_counts.json)
           else
             COUNTS='{"design":0,"gameplay":0,"narrativa":0,"performance":0,"audio":0}'
