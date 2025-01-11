@@ -1,6 +1,4 @@
-
-name: notify telegram 
-
+name: notify telegram
 
 on:
   push:
@@ -18,7 +16,7 @@ jobs:
       - name: Get original commit details
         id: original_commit
         run: |
-          ORIGINAL_COMMIT_SHA=$(git rev-parse HEAD)
+          ORIGINAL_COMMIT_SHA=$(git rev-parse HEAD~1) # Riferimento al commit dell'utente
           ORIGINAL_COMMIT_MESSAGE=$(git log -1 --pretty=format:'%s' $ORIGINAL_COMMIT_SHA)
           ORIGINAL_COMMIT_DESCRIPTION=$(git log -1 --pretty=format:'%b' $ORIGINAL_COMMIT_SHA)
           ORIGINAL_COMMIT_AUTHOR=$(git log -1 --pretty=format:'%an' $ORIGINAL_COMMIT_SHA)
@@ -79,8 +77,8 @@ jobs:
       - name: Get commit author
         id: commit_author
         run: |
-          COMMIT_AUTHOR_NAME=$(git log -1 --pretty=format:'%an')
-          COMMIT_AUTHOR_EMAIL=$(git log -1 --pretty=format:'%ae')
+          COMMIT_AUTHOR_NAME=$(git log -1 --pretty=format:'%an' ${{ steps.original_commit.outputs.sha }})
+          COMMIT_AUTHOR_EMAIL=$(git log -1 --pretty=format:'%ae' ${{ steps.original_commit.outputs.sha }})
           echo "::set-output name=name::$COMMIT_AUTHOR_NAME"
           echo "::set-output name=email::$COMMIT_AUTHOR_EMAIL"
 
