@@ -1,4 +1,4 @@
-name: notify telegram
+name: notify telegram 
 
 
 on:
@@ -51,6 +51,10 @@ jobs:
           REMOVED_KB=$(echo "scale=2; $REMOVED_BYTES / 1024" | bc)
           ADDED_LINES=$(git diff --numstat $COMMIT_SHA^ $COMMIT_SHA | awk '{added += $1} END {print added}')
           REMOVED_LINES=$(git diff --numstat $COMMIT_SHA^ $COMMIT_SHA | awk '{removed += $2} END {print removed}')
+          echo "Added KB: $ADDED_KB"
+          echo "Removed KB: $REMOVED_KB"
+          echo "Added Lines: $ADDED_LINES"
+          echo "Removed Lines: $REMOVED_LINES"
           echo "::set-output name=added_kb::$ADDED_KB"
           echo "::set-output name=removed_kb::$REMOVED_KB"
           echo "::set-output name=added_lines::$ADDED_LINES"
@@ -117,4 +121,5 @@ jobs:
           ADDED_LINES="${{ steps.commit_weight.outputs.added_lines }}"
           REMOVED_LINES="${{ steps.commit_weight.outputs.removed_lines }}"
           MESSAGE=$(printf "Nuovo commit nel repository: ${{ github.repository }}.\n\n*Commit:* $ORIGINAL_COMMIT_SHA\n\n*Autore:* $ORIGINAL_COMMIT_AUTHOR\n\n*Messaggio:* $ORIGINAL_COMMIT_MESSAGE\n\n*Descrizione:* $ORIGINAL_COMMIT_DESCRIPTION\n\n*Link:* $COMMIT_URL\n\n*Numero di commit con parole chiave:*\n\n- Design: $COMMIT_COUNT_DESIGN\n- Gameplay: $COMMIT_COUNT_GAMEPLAY\n- Narrativa: $COMMIT_COUNT_NARRATIVA\n- Performance: $COMMIT_COUNT_PERFORMANCE\n- Audio: $COMMIT_COUNT_AUDIO\n\n*File modificati:*\n\n$MODIFIED_FILES\n\n*Peso del commit:* Aggiunti: $ADDED_KB KB, Rimossi: $REMOVED_KB KB\n*Linee aggiunte:* $ADDED_LINES\n*Linee rimosse:* $REMOVED_LINES")
+          echo "$MESSAGE"
           curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendMessage -d chat_id=${{ secrets.TELEGRAM_CHAT_ID }} -d text="$MESSAGE" -d parse_mode="Markdown"
