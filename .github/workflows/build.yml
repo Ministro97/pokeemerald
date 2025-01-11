@@ -1,4 +1,4 @@
-name: notify Telegram 
+name: notify telegram
 
 
 on:
@@ -113,39 +113,10 @@ jobs:
           COMMIT_COUNT_PERFORMANCE=$(echo $COUNTS | jq '.performance')
           COMMIT_COUNT_AUDIO=$(echo $COUNTS | jq '.audio')
           MODIFIED_FILES="${{ steps.modified_files.outputs.files }}"
-          ADDED_KB="${{ steps.commit_weight.outputs.added_kb }}"
-          REMOVED_KB="${{ steps.commit_weight.outputs.removed_kb }}"
-          ADDED_LINES="${{ steps.commit_weight.outputs.added_lines }}"
-          REMOVED_LINES="${{ steps.commit_weight.outputs.removed_lines }}"
-          MESSAGE=$(cat <<EOF
-Nuovo commit nel repository: ${{ github.repository }}.
-
-*Commit:* $ORIGINAL_COMMIT_SHA
-
-*Autore:* $ORIGINAL_COMMIT_AUTHOR
-
-*Messaggio:* $ORIGINAL_COMMIT_MESSAGE
-
-*Descrizione:* $ORIGINAL_COMMIT_DESCRIPTION
-
-*Link:* $COMMIT_URL
-
-*Numero di commit con parole chiave:*
-
-- Design: $COMMIT_COUNT_DESIGN
-- Gameplay: $COMMIT_COUNT_GAMEPLAY
-- Narrativa: $COMMIT_COUNT_NARRATIVA
-- Performance: $COMMIT_COUNT_PERFORMANCE
-- Audio: $COMMIT_COUNT_AUDIO
-
-*File modificati:*
-
-$MODIFIED_FILES
-
-*Peso del commit:* Aggiunti: $ADDED_KB KB, Rimossi: $REMOVED_KB KB
-*Linee aggiunte:* $ADDED_LINES
-*Linee rimosse:* $REMOVED_LINES
-EOF
-)
+          ADDED_KB="${{ steps.modified_files.outputs.added_kb }}"
+          REMOVED_KB="${{ steps.modified_files.outputs.removed_kb }}"
+          ADDED_LINES="${{ steps.modified_files.outputs.added_lines }}"
+          REMOVED_LINES="${{ steps.modified_files.outputs.removed_lines }}"
+          MESSAGE=$(printf "Nuovo commit nel repository: ${{ github.repository }}.\n\n*Commit:* $ORIGINAL_COMMIT_SHA\n\n*Autore:* $ORIGINAL_COMMIT_AUTHOR\n\n*Messaggio:* $ORIGINAL_COMMIT_MESSAGE\n\n*Descrizione:* $ORIGINAL_COMMIT_DESCRIPTION\n\n*Link:* $COMMIT_URL\n\n*Numero di commit con parole chiave:*\n\n- Design: $COMMIT_COUNT_DESIGN\n- Gameplay: $COMMIT_COUNT_GAMEPLAY\n- Narrativa: $COMMIT_COUNT_NARRATIVA\n- Performance: $COMMIT_COUNT_PERFORMANCE\n- Audio: $COMMIT_COUNT_AUDIO\n\n*File modificati:*\n\n$MODIFIED_FILES\n\n*Peso del commit:* Aggiunti: $ADDED_KB KB, Rimossi: $REMOVED_KB KB\n*Linee aggiunte:* $ADDED_LINES\n*Linee rimosse:* $REMOVED_LINES")
           echo "$MESSAGE"
           curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendMessage -d chat_id=${{ secrets.TELEGRAM_CHAT_ID }} -d text="$MESSAGE" -d parse_mode="Markdown"
