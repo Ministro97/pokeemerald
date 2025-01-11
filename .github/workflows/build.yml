@@ -1,4 +1,4 @@
-name: notify telegram 
+name: notify telegram
 
 
 on:
@@ -30,31 +30,28 @@ jobs:
           echo "::set-output name=description::$ORIGINAL_COMMIT_DESCRIPTION"
           echo "::set-output name=author::$ORIGINAL_COMMIT_AUTHOR"
 
-      - name: Get modified files
+      - name: Get modified files and calculate weight
         id: modified_files
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           COMMIT_SHA="${{ steps.original_commit.outputs.sha }}"
           REPO="${{ github.repository }}"
-          MODIFIED_FILES=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
-            "https://api.github.com/repos/$REPO/commits/$COMMIT_SHA" | jq -r '.files[].filename')
-          echo "::set-output name=files::$MODIFIED_FILES"
-
-      - name: Calculate commit weight and lines
-        id: commit_weight
-        run: |
-          COMMIT_SHA="${{ steps.original_commit.outputs.sha }}"
-          ADDED_BYTES=$(git diff --numstat $COMMIT_SHA^ $COMMIT_SHA | awk '{added += $1} END {print added}')
-          REMOVED_BYTES=$(git diff --numstat $COMMIT_SHA^ $COMMIT_SHA | awk '{removed += $2} END {print removed}')
+          COMMIT_DETAILS=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
+            "https://api.github.com/repos/$REPO/commits/$COMMIT_SHA")
+          MODIFIED_FILES=$(echo $COMMIT_DETAILS | jq -r '.files[].filename')
+          ADDED_BYTES=$(echo $COMMIT_DETAILS | jq '[.files[].additions] | add')
+          REMOVED_BYTES=$(echo $COMMIT_DETAILS | jq '[.files[].deletions] | add')
           ADDED_KB=$(echo "scale=2; $ADDED_BYTES / 1024" | bc)
           REMOVED_KB=$(echo "scale=2; $REMOVED_BYTES / 1024" | bc)
-          ADDED_LINES=$(git diff --numstat $COMMIT_SHA^ $COMMIT_SHA | awk '{added += $1} END {print added}')
-          REMOVED_LINES=$(git diff --numstat $COMMIT_SHA^ $COMMIT_SHA | awk '{removed += $2} END {print removed}')
+          ADDED_LINES=$(echo $COMMIT_DETAILS | jq '[.files[].additions] | add')
+          REMOVED_LINES=$(echo $COMMIT_DETAILS | jq '[.files[].deletions] | add')
+          echo "Modified files: $MODIFIED_FILES"
           echo "Added KB: $ADDED_KB"
           echo "Removed KB: $REMOVED_KB"
           echo "Added Lines: $ADDED_LINES"
           echo "Removed Lines: $REMOVED_LINES"
+          echo "::set-output name=files::$MODIFIED_FILES"
           echo "::set-output name=added_kb::$ADDED_KB"
           echo "::set-output name=removed_kb::$REMOVED_KB"
           echo "::set-output name=added_lines::$ADDED_LINES"
