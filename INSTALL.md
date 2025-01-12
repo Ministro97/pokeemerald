@@ -1,4 +1,4 @@
-# Istruzioni1111111 11111
+# Istruzioni1111111 111111
 1
 These instructions explain how to set up the tools required to build **pokeemerald**, which assembles the source files into a ROM.
 
