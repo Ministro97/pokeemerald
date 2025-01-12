@@ -1,43 +1,5 @@
-1# Istruzioni1111111 11111111111
+1# Istruzioni1111111 11111111111124:_-:''::'::::;;;-----;:£5-_5-:
 1
-These instructions explain how to set up the tools required to build **pokeemerald**, which assembles the source files into a ROM.
-
-These instructions come with notes which can be expanded by clicking the "<i>Note...</i>" text.
-In general, you should not need to open these unless if you get an error or if you need additional clarification.
-
-If you run into trouble, ask for help on Discord or IRC (see [README.md](README.md)).
-
-## Windows
-Windows has instructions for building with three possible terminals, providing 3 different options in case the user stumbles upon unexpected errors.
-- [Windows 10/11 (WSL1)](#windows-1011-wsl1) (**Fastest, highly recommended**, Windows 10 and 11 only)
-- [Windows (msys2)](#windows-msys2) (Second fastest)
-- [Windows (Cygwin)](#windows-cygwin) (Slowest)
-
-Unscientific benchmarks suggest **msys2 is 2x slower** than WSL1, and **Cygwin is 5-6x slower** than WSL1.
-<details>
-    <summary><i>Note for advanced users: <b>WSL2</b>...</i></summary>
-
->   <b>WSL2</b> is an option and is even faster than <b>WSL1</b> if files are stored on the WSL2 file system, but some tools may have trouble interacting
->   with the WSL2 file system over the network drive. For example, tools which use Qt versions before 5.15.2 such as <a href="https://github.com/huderlem/porymap">porymap</a>
->   may <a href="https://bugreports.qt.io/browse/QTBUG-86277">have problems with parsing the <code>\\wsl$</code> network drive path</a>.
-</details>
-
-All of the Windows instructions assume that the default drive is C:\\. If this differs to your actual drive letter, then replace C with the correct drive letter when reading the instructions.
-
-**A note of caution**: As Windows 7 and Windows 8 are officially unsupported by Microsoft, some maintainers are unwilling to maintain the Windows 7/8 instructions. Thus, these instructions may break in the future with fixes taking longer than fixes to the Windows 10/11 instructions.
-
-## Windows 10/11 (WSL1)
-WSL1 is the preferred terminal to build **pokeemerald**. The following instructions will explain how to install WSL1 (referred to interchangeably as WSL).
-- If WSL (Debian or Ubuntu) is **not installed**, then go to [Installing WSL1](#Installing-WSL1).
-- Otherwise, if WSL is installed, but it **hasn't previously been set up for another decompilation project**, then go to [Setting up WSL1](#Setting-up-WSL1).
-- Otherwise, **open WSL** and go to [Choosing where to store pokeemerald (WSL1)](#Choosing-where-to-store-pokeemerald-WSL1).
-
-### Installing WSL1
-1. Open [Windows Powershell **as Administrator**](https://i.imgur.com/QKmVbP9.png), and run the following commands (Right Click or Shift+Insert is paste in the Powershell).
-
-    ```powershell
-	wsl --install -d Ubuntu --enable-wsl1
-    ```
 
 2. Once the process finishes, restart your machine.
 
