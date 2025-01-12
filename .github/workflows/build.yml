@@ -76,18 +76,26 @@ jobs:
           COUNTS=$(cat keyword_commit_counts.json)
           echo "::set-output name=counts::$COUNTS"
 
-      - name: Get commit count with keywords
-        id: commit_count_keywords
-        run: |
-          COUNTS='${{ steps.read_counts.outputs.counts }}'
-          COMMIT_COUNT_DESIGN=$(git log --grep="design" -i --oneline | wc -l)
-          COMMIT_COUNT_GAMEPLAY=$(git log --grep="gameplay" -i --oneline | wc -l)
-          COMMIT_COUNT_NARRATIVA=$(git log --grep="narrativa" -i --oneline | wc -l)
-          COMMIT_COUNT_PERFORMANCE=$(git log --grep="performance" -i --oneline | wc -l)
-          COMMIT_COUNT_AUDIO=$(git log --grep="audio" -i --oneline | wc -l)
-          NEW_COUNTS=$(echo $COUNTS | jq --argjson design $COMMIT_COUNT_DESIGN --argjson gameplay $COMMIT_COUNT_GAMEPLAY --argjson narrativa $COMMIT_COUNT_NARRATIVA --argjson performance $COMMIT_COUNT_PERFORMANCE --argjson audio $COMMIT_COUNT_AUDIO '.design += ($design | tonumber) | .gameplay += ($gameplay | tonumber) | .narrativa += ($narrativa | tonumber) | .performance += ($performance | tonumber) | .audio += ($audio | tonumber)')
-          echo $NEW_COUNTS > keyword_commit_counts.json
-          echo "::set-output name=new_counts::$NEW_COUNTS"
+
+- name: Get commit count with keywords
+  id: commit_count_keywords
+  run: |
+    COUNTS='${{ steps.read_counts.outputs.counts }}'
+    echo "Current counts: $COUNTS"
+    COMMIT_COUNT_DESIGN=$(git log --grep="design" -i --oneline | wc -l)
+    COMMIT_COUNT_GAMEPLAY=$(git log --grep="gameplay" -i --oneline | wc -l)
+    COMMIT_COUNT_NARRATIVA=$(git log --grep="narrativa" -i --oneline | wc -l)
+    COMMIT_COUNT_PERFORMANCE=$(git log --grep="performance" -i --oneline | wc -l)
+    COMMIT_COUNT_AUDIO=$(git log --grep="audio" -i --oneline | wc -l)
+    echo "Design commits: $COMMIT_COUNT_DESIGN"
+    echo "Gameplay commits: $COMMIT_COUNT_GAMEPLAY"
+    echo "Narrativa commits: $COMMIT_COUNT_NARRATIVA"
+    echo "Performance commits: $COMMIT_COUNT_PERFORMANCE"
+    echo "Audio commits: $COMMIT_COUNT_AUDIO"
+    NEW_COUNTS=$(echo $COUNTS | jq --argjson design $COMMIT_COUNT_DESIGN --argjson gameplay $COMMIT_COUNT_GAMEPLAY --argjson narrativa $COMMIT_COUNT_NARRATIVA --argjson performance $COMMIT_COUNT_PERFORMANCE --argjson audio $COMMIT_COUNT_AUDIO '.design += ($design | tonumber) | .gameplay += ($gameplay | tonumber) | .narrativa += ($narrativa | tonumber) | .performance += ($performance | tonumber) | .audio += ($audio | tonumber)')
+    echo "New counts: $NEW_COUNTS"
+    echo $NEW_COUNTS > keyword_commit_counts.json
+    echo "::set-output name=new_counts::$NEW_COUNTS"
 
       - name: Get commit author
         id: commit_author
