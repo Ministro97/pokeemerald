@@ -1,5 +1,5 @@
 
-name: notify telegram
+name: notify TG
 
 
 on:
@@ -83,14 +83,6 @@ jobs:
           COMMIT_AUTHOR_EMAIL=$(git log -1 --pretty=format:'%ae')
           echo "::set-output name=name::$COMMIT_AUTHOR_NAME"
           echo "::set-output name=email::$COMMIT_AUTHOR_EMAIL"
-
-      - name: Commit updated counts
-        run: |
-          git config --global user.name "${{ steps.commit_author.outputs.name }}"
-          git config --global user.email "${{ steps.commit_author.outputs.email }}"
-          git add keyword_commit_counts.json
-          git commit -m "Aggiorna conteggi commit parole chiave"
-          git push
 
       - name: Send message to Telegram
         env:
