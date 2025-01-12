@@ -44,6 +44,15 @@ jobs:
             git add keyword_commit_counts.json
             git commit -m "Create and update keyword_commit_counts.json"
             git push
+          else
+            COUNTS=$(cat keyword_commit_counts.json)
+            NEW_COUNTS=$(echo $COUNTS | jq --argjson design $COMMIT_COUNT_DESIGN --argjson gameplay $COMMIT_COUNT_GAMEPLAY --argjson narrativa $COMMIT_COUNT_NARRATIVA --argjson performance $COMMIT_COUNT_PERFORMANCE --argjson audio $COMMIT_COUNT_AUDIO '.design += ($design | tonumber) | .gameplay += ($gameplay | tonumber) | .narrativa += ($narrativa | tonumber) | .performance += ($performance | tonumber) | .audio += ($audio | tonumber)')
+            echo $NEW_COUNTS > keyword_commit_counts.json
+            git config --global user.name "GitHub Actions"
+            git config --global user.email "actions@github.com"
+            git add keyword_commit_counts.json
+            git commit -m "Update keyword_commit_counts.json"
+            git push
           fi
           ls -l keyword_commit_counts.json # Verifica i permessi del file
           cat keyword_commit_counts.json # Verifica la creazione del file
@@ -105,17 +114,7 @@ jobs:
 
       - name: Get commit author
         id: commit_author
-        run: |
-          COMMIT_AUTHOR_NAME=$(git log -1 --pretty=format:'%an' ${{ steps.original_commit.outputs.sha }})
-          COMMIT_AUTHOR_EMAIL=$(git log -1 --pretty=format:'%ae' ${{ steps.original_commit.outputs.sha }})
-          echo "::set-output name=name::$COMMIT_AUTHOR_NAME"
-          echo "::set-output name=email::$COMMIT_AUTHOR_EMAIL"
-
-      - name: Send message to Telegram
-        env:
-          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
-          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: |
+                run: |
           ORIGINAL_COMMIT_SHA="${{ steps.original_commit.outputs.sha }}"
           ORIGINAL_COMMIT_MESSAGE="${{ steps.original_commit.outputs.message }}"
           ORIGINAL_COMMIT_DESCRIPTION="${{ steps.original_commit.outputs.description }}"
