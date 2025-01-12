@@ -1,3 +1,7 @@
+
+name: not
+
+
 on:
   push:
     branches:
