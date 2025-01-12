@@ -1,4 +1,4 @@
-name: notify Telegram
+name: notify TG
 
 on:
   push:
