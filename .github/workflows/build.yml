@@ -1,4 +1,4 @@
-name: notify TG
+name: notify
 
 on:
   push:
@@ -13,19 +13,14 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
 
-      - name: Ensure keyword commit counts file exists and update with current counts
+      - name: Ensure keyword commit counts file exists
         run: |
-          COMMIT_COUNT_DESIGN=$(git log --grep="design" -i --oneline | wc -l)
-          COMMIT_COUNT_GAMEPLAY=$(git log --grep="gameplay" -i --oneline | wc -l)
-          COMMIT_COUNT_NARRATIVA=$(git log --grep="narrativa" -i --oneline | wc -l)
-          COMMIT_COUNT_PERFORMANCE=$(git log --grep="performance" -i --oneline | wc -l)
-          COMMIT_COUNT_AUDIO=$(git log --grep="audio" -i --oneline | wc -l)
           if [ ! -f keyword_commit_counts.json ]; then
-            echo "{\"design\":$COMMIT_COUNT_DESIGN,\"gameplay\":$COMMIT_COUNT_GAMEPLAY,\"narrativa\":$COMMIT_COUNT_NARRATIVA,\"performance\":$COMMIT_COUNT_PERFORMANCE,\"audio\":$COMMIT_COUNT_AUDIO}" > keyword_commit_counts.json
+            echo '{"design":0,"gameplay":0,"narrativa":0,"performance":0,"audio":0}' > keyword_commit_counts.json
             git config --global user.name "GitHub Actions"
             git config --global user.email "actions@github.com"
             git add keyword_commit_counts.json
-            git commit -m "Create and update keyword_commit_counts.json"
+            git commit -m "Create keyword_commit_counts.json"
             git push
           fi
           ls -l keyword_commit_counts.json # Verifica i permessi del file
@@ -80,16 +75,17 @@ jobs:
           COUNTS=$(cat keyword_commit_counts.json)
           echo "::set-output name=counts::$COUNTS"
 
-      - name: Get commit count with keywords
-        id: commit_count_keywords
+      - name: Update keyword commit counts based on user commit
+        id: update_counts
         run: |
           COUNTS='${{ steps.read_counts.outputs.counts }}'
           echo "Current counts: $COUNTS"
-          COMMIT_COUNT_DESIGN=$(git log --grep="design" -i --oneline | wc -l)
-          COMMIT_COUNT_GAMEPLAY=$(git log --grep="gameplay" -i --oneline | wc -l)
-          COMMIT_COUNT_NARRATIVA=$(git log --grep="narrativa" -i --oneline | wc -l)
-          COMMIT_COUNT_PERFORMANCE=$(git log --grep="performance" -i --oneline | wc -l)
-          COMMIT_COUNT_AUDIO=$(git log --grep="audio" -i --oneline | wc -l)
+          COMMIT_MESSAGE='${{ steps.original_commit.outputs.message }}'
+          COMMIT_COUNT_DESIGN=$(echo "$COMMIT_MESSAGE" | grep -o -i "design" | wc -l)
+          COMMIT_COUNT_GAMEPLAY=$(echo "$COMMIT_MESSAGE" | grep -o -i "gameplay" | wc -l)
+          COMMIT_COUNT_NARRATIVA=$(echo "$COMMIT_MESSAGE" | grep -o -i "narrativa" | wc -l)
+          COMMIT_COUNT_PERFORMANCE=$(echo "$COMMIT_MESSAGE" | grep -o -i "performance" | wc -l)
+          COMMIT_COUNT_AUDIO=$(echo "$COMMIT_MESSAGE" | grep -o -i "audio" | wc -l)
           echo "Design commits: $COMMIT_COUNT_DESIGN"
           echo "Gameplay commits: $COMMIT_COUNT_GAMEPLAY"
           echo "Narrativa commits: $COMMIT_COUNT_NARRATIVA"
