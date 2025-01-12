@@ -135,5 +135,4 @@ jobs:
           BUTTON_URL="https://example.com" # Sostituisci con il link desiderato
           BUTTON_TEXT="Clicca qui per maggiori dettagli"
           curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendMessage -d chat_id=${{ secrets.TELEGRAM_CHAT_ID }} -d text="$MESSAGE" -d parse_mode="Markdown" -d reply_markup="{\"inline_keyboard\":[[{\"text\":\"$BUTTON_TEXT\",\"url\":\"$BUTTON_URL\"}]]}"
-
           
