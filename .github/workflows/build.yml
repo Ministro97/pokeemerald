@@ -37,17 +37,17 @@ jobs:
           ORIGINAL_COMMIT_MESSAGE=$(echo $COMMIT_DETAILS | jq -r .commit.message)
           ORIGINAL_COMMIT_AUTHOR=$(echo $COMMIT_DETAILS | jq -r .commit.author.name)
           ORIGINAL_COMMIT_DESCRIPTION=$(echo $COMMIT_DETAILS | jq -r .commit.message)
-          echo "sha=$COMMIT_SHA" >> $GITHUB_ENV
-          echo "message=$ORIGINAL_COMMIT_MESSAGE" >> $GITHUB_ENV
-          echo "description=$ORIGINAL_COMMIT_DESCRIPTION" >> $GITHUB_ENV
-          echo "author=$ORIGINAL_COMMIT_AUTHOR" >> $GITHUB_ENV
+          echo "::set-output name=sha::$COMMIT_SHA"
+          echo "::set-output name=message::$ORIGINAL_COMMIT_MESSAGE"
+          echo "::set-output name=description::$ORIGINAL_COMMIT_DESCRIPTION"
+          echo "::set-output name=author::$ORIGINAL_COMMIT_AUTHOR"
 
       - name: Get modified files and calculate weight
         id: modified_files
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          COMMIT_SHA="${{ env.sha }}"
+          COMMIT_SHA="${{ steps.original_commit.outputs.sha }}"
           REPO="${{ github.repository }}"
           COMMIT_DETAILS=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
             "https://api.github.com/repos/$REPO/commits/$COMMIT_SHA")
@@ -63,22 +63,22 @@ jobs:
           echo "Removed KB: $REMOVED_KB"
           echo "Added Lines: $ADDED_LINES"
           echo "Removed Lines: $REMOVED_LINES"
-          echo "files=$MODIFIED_FILES" >> $GITHUB_ENV
-          echo "added_kb=$ADDED_KB" >> $GITHUB_ENV
-          echo "removed_kb=$REMOVED_KB" >> $GITHUB_ENV
-          echo "added_lines=$ADDED_LINES" >> $GITHUB_ENV
-          echo "removed_lines=$REMOVED_LINES" >> $GITHUB_ENV
+          echo "::set-output name=files::$MODIFIED_FILES"
+          echo "::set-output name=added_kb::$ADDED_KB"
+          echo "::set-output name=removed_kb::$REMOVED_KB"
+          echo "::set-output name=added_lines::$ADDED_LINES"
+          echo "::set-output name=removed_lines::$REMOVED_LINES"
 
       - name: Read keyword commit counts
         id: read_counts
         run: |
           COUNTS=$(cat keyword_commit_counts.json)
-          echo "counts=$COUNTS" >> $GITHUB_ENV
+          echo "::set-output name=counts::$COUNTS"
 
       - name: Get commit count with keywords
         id: commit_count_keywords
         run: |
-          COUNTS='${{ env.counts }}'
+          COUNTS='${{ steps.read_counts.outputs.counts }}'
           echo "Current counts: $COUNTS"
           COMMIT_COUNT_DESIGN=$(git log --grep="design" -i --oneline | wc -l)
           COMMIT_COUNT_GAMEPLAY=$(git log --grep="gameplay" -i --oneline | wc -l)
@@ -94,36 +94,36 @@ jobs:
           echo "New counts: $NEW_COUNTS"
           echo $NEW_COUNTS > keyword_commit_counts.json
           cat keyword_commit_counts.json # Verifica il contenuto del file dopo l'aggiornamento
-          echo "new_counts=$NEW_COUNTS" >> $GITHUB_ENV
+          echo "::set-output name=new_counts::$NEW_COUNTS"
 
       - name: Get commit author
         id: commit_author
         run: |
-          COMMIT_AUTHOR_NAME=$(git log -1 --pretty=format:'%an' ${{ env.sha }})
-          COMMIT_AUTHOR_EMAIL=$(git log -1 --pretty=format:'%ae' ${{ env.sha }})
-          echo "name=$COMMIT_AUTHOR_NAME" >> $GITHUB_ENV
-          echo "email=$COMMIT_AUTHOR_EMAIL" >> $GITHUB_ENV
+          COMMIT_AUTHOR_NAME=$(git log -1 --pretty=format:'%an' ${{ steps.original_commit.outputs.sha }})
+          COMMIT_AUTHOR_EMAIL=$(git log -1 --pretty=format:'%ae' ${{ steps.original_commit.outputs.sha }})
+          echo "::set-output name=name::$COMMIT_AUTHOR_NAME"
+          echo "::set-output name=email::$COMMIT_AUTHOR_EMAIL"
 
       - name: Send message to Telegram
         env:
           TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
-          ORIGINAL_COMMIT_SHA="${{ env.sha }}"
-          ORIGINAL_COMMIT_MESSAGE="${{ env.message }}"
-          ORIGINAL_COMMIT_DESCRIPTION="${{ env.description }}"
-          ORIGINAL_COMMIT_AUTHOR="${{ env.author }}"
+          ORIGINAL_COMMIT_SHA="${{ steps.original_commit.outputs.sha }}"
+          ORIGINAL_COMMIT_MESSAGE="${{ steps.original_commit.outputs.message }}"
+          ORIGINAL_COMMIT_DESCRIPTION="${{ steps.original_commit.outputs.description }}"
+          ORIGINAL_COMMIT_AUTHOR="${{ steps.original_commit.outputs.author }}"
           COUNTS=$(cat keyword_commit_counts.json)
           COMMIT_COUNT_DESIGN=$(echo $COUNTS | jq '.design')
           COMMIT_COUNT_GAMEPLAY=$(echo $COUNTS | jq '.gameplay')
           COMMIT_COUNT_NARRATIVA=$(echo $COUNTS | jq '.narrativa')
           COMMIT_COUNT_PERFORMANCE=$(echo $COUNTS | jq '.performance')
           COMMIT_COUNT_AUDIO=$(echo $COUNTS | jq '.audio')
-          MODIFIED_FILES="${{ env.files }}"
-          ADDED_KB="${{ env.added_kb }}"
-          REMOVED_KB="${{ env.removed_kb }}"
-          ADDED_LINES="${{ env.added_lines }}"
-          REMOVED_LINES="${{ env.removed_lines }}"
+          MODIFIED_FILES="${{ steps.modified_files.outputs.files }}"
+          ADDED_KB="${{ steps.modified_files.outputs.added_kb }}"
+          REMOVED_KB="${{ steps.modified_files.outputs.removed_kb }}"
+          ADDED_LINES="${{ steps.modified_files.outputs.added_lines }}"
+          REMOVED_LINES="${{ steps.modified_files.outputs.removed_lines }}"
           MESSAGE=$(printf "Nuovo commit nel repository: ${{ github.repository }}.\n\n*Commit:* $ORIGINAL_COMMIT_SHA\n\n*Autore:* $ORIGINAL_COMMIT_AUTHOR\n\n*Messaggio:* $ORIGINAL_COMMIT_MESSAGE\n\n*Descrizione:* $ORIGINAL_COMMIT_DESCRIPTION\n\n*File modificati:*\n\n$MODIFIED_FILES\n\n*Dati aggiunti:* $ADDED_KB KB\n*Dati rimossi:* $REMOVED_KB KB\n*Linee aggiunte:* $ADDED_LINES\n*Linee rimosse:* $REMOVED_LINES\n\n*Numero di commit per componente:*\n\n- Design: $COMMIT_COUNT_DESIGN\n- Gameplay: $COMMIT_COUNT_GAMEPLAY\n- Narrativa: $COMMIT_COUNT_NARRATIVA\n- Performance: $COMMIT_COUNT_PERFORMANCE\n- Audio: $COMMIT_COUNT_AUDIO")
           BUTTON_URL="https://example.com" # Sostituisci con il link desiderato
           BUTTON_TEXT="Clicca qui per maggiori dettagli"
