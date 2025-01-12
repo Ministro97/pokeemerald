@@ -1,3 +1,4 @@
+
 name: notify TG
 
 on:
@@ -126,4 +127,4 @@ jobs:
           MESSAGE=$(printf "📢 *Nuovo commit in Pokémon XX*\n\n\n*ID:* \`$ORIGINAL_COMMIT_SHA\`\n\n*Autore:* $ORIGINAL_COMMIT_AUTHOR\n\n*Componente:* $ESCAPED_MESSAGE\n\n*Descrizione:* $ESCAPED_DESCRIPTION\n\n*File Modificati:* $MODIFIED_FILES\n\n*Kb Aggiunti:* $ADDED_KB\n\n*Kb Rimossi:* $REMOVED_KB\n\n*Linee Aggiunte:* $ADDED_LINES\n\n*Linee Rimosse:* $REMOVED_LINES")
           BUTTON_URL="https://example.com" # Sostituisci con il link desiderato
           BUTTON_TEXT="Clicca qui per maggiori dettagli"
-          curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendMessage -d chat_id=${{ secrets.TELEGRAM_CHAT_ID }} -d text="$MESSAGE" -d parse_mode="Markdown" -d reply_markup="[{\"text\":\"$BUTTON_TEXT\",\"url\":\"$BUTTON_URL\"}]"
+          curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendMessage -d chat_id=${{ secrets.TELEGRAM_CHAT_ID }} -d text="$MESSAGE" -d parse_mode="Markdown" -d reply_markup="{\"inline_keyboard\":[[{\"text\":\"$BUTTON_TEXT\",\"url\":\"$BUTTON_URL\"}]]}"
