@@ -1,5 +1,5 @@
-name: notifyi tg
 
+name: not
 
 on:
   push:
@@ -62,7 +62,6 @@ jobs:
         run: |
           if [ -f keyword_commit_counts.json ]; then
             COUNTS=$(cat keyword_commit_counts.json)
-            echo "$COUNTS" | jq . > /dev/null 2>&1 || COUNTS='{"design":0,"gameplay":0,"narrativa":0,"performance":0,"audio":0}'
           else
             COUNTS='{"design":0,"gameplay":0,"narrativa":0,"performance":0,"audio":0}'
           fi
