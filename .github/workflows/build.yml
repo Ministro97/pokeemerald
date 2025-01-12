@@ -35,7 +35,136 @@ jobs:
           COMMIT_DETAILS=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
             "https://api.github.com/repos/${{ github.repository }}/commits/$COMMIT_SHA")
           ORIGINAL_COMMIT_MESSAGE=$(echo "$COMMIT_DETAILS" | jq -r .commit.message | awk 'BEGIN {RS=""; FS="\n\n"} {print $1}')
-          EXTENDED_DESCRIPTION=$(echo "$COMMIT_DETAILS" | jq -r .commit.message | awk 'BEGIN {RS=""; FS="\n\n"} {print $2}')
+          EXTENDED_DESCRIPTION=$(echo "$COMMIT_DETAILS" | jq -r .commit.message | awk 'BEGIN {RS=""; FS="\n\n"} {if (NF>1) print $2; else print ""}')
+          ORIGINAL_COMMIT_AUTHOR=$(echo "$COMMIT_DETAILS" | jq -r .commit.author.name)
+          echo "::set-output name=sha::$COMMIT_SHA"
+          echo "::set-output name=message::$ORIGINAL_COMMIT_MESSAGE"
+          echo "::set-output name=extended_description::$EXTENDED_DESCRIPTION"
+          echo "::set-output name=author::$ORIGINAL_COMMIT_AUTHOR"
+
+      - name: Get modified files and calculate weight
+        id: modified_files
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          COMMIT_SHA="${{ steps.original_commit.outputs.sha }}"
+          REPO="${{ github.repository }}"
+          COMMIT_DETAILS=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
+            "https://api.github.com/repos/$REPO/commits/$COMMIT_SHA")
+          MODIFIED_FILES=$(echo $COMMIT_DETAILS | jq -r '.files[].filename')
+          ADDED_BYTES=$(echo $COMMIT_DETAILS | jq '[.files[].additions] | add')
+          REMOVED_BYTES=$(echo $COMMIT_DETAILS | jq '[.files[].deletions] | add')
+          ADDED_KB=$(printf "%.2f" $(echo "scale=2; $ADDED_BYTES / 1024" | bc) | sed 's/\./,/')
+          REMOVED_KB=$(printf "%.2f" $(echo "scale=2; $REMOVED_BYTES / 1024" | bc) | sed 's/\./,/')
+          ADDED_LINES=$(echo $COMMIT_DETAILS | jq '[.files[].additions] | add')
+          REMOVED_LINES=$(echo $COMMIT_DETAILS | jq '[.files[].deletions] | add')
+          echo "Modified files: $MODIFIED_FILES"
+          echo "Added KB: $ADDED_KB"
+          echo "Removed KB: $REMOVED_KB"
+          echo "Added Lines: $ADDED_LINES"
+          echo "Removed Lines: $REMOVED_LINES"
+          echo "::set-output name=files::$MODIFIED_FILES"
+          echo "::set-output name=added_kb::$ADDED_KB"
+          echo "::set-output name=removed_kb::$REMOVED_KB"
+          echo "::set-output name=added_lines::$ADDED_LINES"
+          echo "::set-output name=removed_lines::$REMOVED_LINES"
+
+      - name: Read keyword commit counts
+        id: read_counts
+        run: |
+          COUNTS=$(cat keyword_commit_counts.json)
+          echo "::set-output name=counts::$COUNTS"
+
+      - name: Update keyword commit counts
+        id: update_counts
+        run: |
+          COUNTS='${{ steps.read_counts.outputs.counts }}'
+          ORIGINAL_COMMIT_MESSAGE='${{ steps.original_commit.outputs.message }}'
+          COMMIT_COUNT_DESIGN=$(echo "$ORIGINAL_COMMIT_MESSAGE" | grep -i "design" | wc -l)
+          COMMIT_COUNT_GAMEPLAY=$(echo "$ORIGINAL_COMMIT_MESSAGE" | grep -i "gameplay" | wc -l)
+          COMMIT_COUNT_NARRATIVA=$(echo "$ORIGINAL_COMMIT_MESSAGE" | grep -i "narrativa" | wc -l)
+          COMMIT_COUNT_PERFORMANCE=$(echo "$ORIGINAL_COMMIT_MESSAGE" | grep -i "performance" | wc -l)
+          COMMIT_COUNT_AUDIO=$(echo "$ORIGINAL_COMMIT_MESSAGE" | grep -i "audio" | wc -l)
+          NEW_COUNTS=$(echo $COUNTS | jq --argjson design $COMMIT_COUNT_DESIGN --argjson gameplay $COMMIT_COUNT_GAMEPLAY --argjson narrativa $COMMIT_COUNT_NARRATIVA --argjson performance $COMMIT_COUNT_PERFORMANCE --argjson audio $COMMIT_COUNT_AUDIO '.design += ($design | tonumber) | .gameplay += ($gameplay | tonumber) | .narrativa += ($narrativa | tonumber) | .performance += ($performance | tonumber) | .audio += ($audio | tonumber)')
+          echo $NEW_COUNTS > keyword_commit_counts.json
+          echo "::set-output name=new_counts::$NEW_COUNTS"
+
+      - name: Commit and push updated keyword counts
+        run: |
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+          git add keyword_commit_counts.json
+          git commit -m "Update keyword commit counts"
+          git push
+
+      - name: Get commit author
+        id: commit_author
+        run: |
+          COMMIT_AUTHOR_NAME=$(git log -1 --pretty=format:'%an' ${{ steps.original_commit.outputs.sha }})
+          COMMIT_AUTHOR_EMAIL=$(git log -1 --pretty=format:'%ae' ${{ steps.original_commit.outputs.sha }})
+          echo "::set-output name=name::$COMMIT_AUTHOR_NAME"
+          echo "::set-output name=email::$COMMIT_AUTHOR_EMAIL"
+
+      - name: Send message to Telegram
+        env:
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          ORIGINAL_COMMIT_SHA="${{ steps.original_commit.outputs.sha }}"
+          ORIGINAL_COMMIT_MESSAGE="${{ steps.original_commit.outputs.message }}"
+          EXTENDED_DESCRIPTION="${{ steps.original_commit.outputs.extended_description }}"
+          ORIGINAL_COMMIT_AUTHOR="${{ steps.original_commit.outputs.author }}"
+          COUNTS=$(cat keyword_commit_counts.json)
+          COMMIT_COUNT_DESIGN=$(echo $COUNTS | jq '.design')
+          COMMIT_COUNT_GAMEPLAY=$(echo $COUNTS | jq '.gameplay')
+          COMMIT_COUNT_NARRATIVA=$(echo $COUNTS | jq '.narrativa')
+          COMMIT_COUNT_PERFORMANCE=$(echo $COUNTS | jq '.performance')
+          COMMIT_COUNT_AUDIO=$(echo $COUNTS | jq '.audio')
+          MODIFIED_FILES="${{ steps.modified_files.outputs.files }}"
+          ADDED_KB="${{ steps.modified_files.outputs.added_kb }}"
+          REMOVED_KB="${{ steps.modified_files.outputs.removed_kb }}"
+          ADDED_LINES="${{ steps.modified_files.outputs.added_lines }}"
+          REMOVED_LINES="${{ steps.modified_files.outputs.removed_lines }}"
+          MESSAGE=$(printf "📢 *Nuovo commit nel repository:* ${{ github.repository }}\n\n*Commit:* \`$ORIGINAL_COMMIT_SHA\`\n*Autore:* $ORIGINAL_COMMIT_AUTHOR\n*Messaggio:* $ORIGINAL_COMMIT_MESSAGE\n*Descrizione estesa:* $EXTENDED_DESCRIPTION\n\n*File modificati:*\n$MODIFIED_FILES\n\n*Dati aggiunti:* $ADDED_KB KB\n*Dati rimossi:* $REMOVED_KB KB\n*Linee aggiunte:* $ADDED_LINES\n*Linee rimosse:* $REMOVED_LINES\n\n*Numero di commit per componente:*\n- Design: $COMMIT_COUNT_DESIGN\n- Gameplay: $COMMIT_COUNT_GAMEPLAY\n- Narrativa: $COMMIT_COUNT_NARRATIVA\n- Performance: $COMMIT_COUNT_PERFORMANCE\n- Audio: $COMMIT_COUNT_AUDIO")
+          BUTTON_URL="https://example.com" # Sostituisci con il link desiderato
+          name: notify
+
+on:
+  push:
+    branches:
+      - master # Sostituisci con il branch che desideri monitorare
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Ensure keyword commit counts file exists
+        run: |
+          if [ ! -f keyword_commit_counts.json ]; then
+            echo '{"design":0,"gameplay":0,"narrativa":0,"performance":0,"audio":0}' > keyword_commit_counts.json
+            git config --global user.name "GitHub Actions"
+            git config --global user.email "actions@github.com"
+            git add keyword_commit_counts.json
+            git commit -m "Create keyword_commit_counts.json"
+            git push
+          fi
+          ls -l keyword_commit_counts.json
+          cat keyword_commit_counts.json
+
+      - name: Get original commit details
+        id: original_commit
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          COMMIT_SHA=$(jq -r .after $GITHUB_EVENT_PATH)
+          COMMIT_DETAILS=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
+            "https://api.github.com/repos/${{ github.repository }}/commits/$COMMIT_SHA")
+          ORIGINAL_COMMIT_MESSAGE=$(echo "$COMMIT_DETAILS" | jq -r .commit.message | awk 'BEGIN {RS=""; FS="\n\n"} {print $1}')
+          EXTENDED_DESCRIPTION=$(echo "$COMMIT_DETAILS" | jq -r .commit.message | awk 'BEGIN {RS=""; FS="\n\n"} {if (NF>1) print $2; else print ""}')
           ORIGINAL_COMMIT_AUTHOR=$(echo "$COMMIT_DETAILS" | jq -r .commit.author.name)
           echo "::set-output name=sha::$COMMIT_SHA"
           echo "::set-output name=message::$ORIGINAL_COMMIT_MESSAGE"
@@ -128,4 +257,6 @@ jobs:
           MESSAGE=$(printf "📢 *Nuovo commit nel repository:* ${{ github.repository }}\n\n*Commit:* \`$ORIGINAL_COMMIT_SHA\`\n*Autore:* $ORIGINAL_COMMIT_AUTHOR\n*Messaggio:* $ORIGINAL_COMMIT_MESSAGE\n*Descrizione estesa:* $EXTENDED_DESCRIPTION\n\n*File modificati:*\n$MODIFIED_FILES\n\n*Dati aggiunti:* $ADDED_KB KB\n*Dati rimossi:* $REMOVED_KB KB\n*Linee aggiunte:* $ADDED_LINES\n*Linee rimosse:* $REMOVED_LINES\n\n*Numero di commit per componente:*\n- Design: $COMMIT_COUNT_DESIGN\n- Gameplay: $COMMIT_COUNT_GAMEPLAY\n- Narrativa: $COMMIT_COUNT_NARRATIVA\n- Performance: $COMMIT_COUNT_PERFORMANCE\n- Audio: $COMMIT_COUNT_AUDIO")
           BUTTON_URL="https://example.com" # Sostituisci con il link desiderato
           BUTTON_TEXT="Clicca qui per maggiori dettagli"
-          curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendMessage -d chat_id=${{ secrets.TELEGRAM_CHAT_ID }} -d text="$MESSAGE" -d parse_mode="Markdown" -d reply_markup="{\"inline_keyboard\":[[{\"text\":\"$BUTTON_TEXT\",\"url\":\"$BUTTON_URL\"}]]}"
+          curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendMessage -d chat_id=${{ secrets.TELEGRAM_CHAT_ID }} -d text
+
+          
