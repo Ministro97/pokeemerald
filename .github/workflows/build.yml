@@ -1,4 +1,4 @@
-name: notify
+name: notify TG
 
 on:
   push:
