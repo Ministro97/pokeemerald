@@ -1,5 +1,5 @@
 .set LOCALID_APPRENTICE, 6
-
+xtgsf
 BattleFrontier_BattleTowerLobby_EventScript_Apprentice::
 	lock
 	faceplayer
