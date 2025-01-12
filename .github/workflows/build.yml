@@ -1,3 +1,4 @@
+
 name: notify
 
 on:
@@ -34,13 +35,11 @@ jobs:
           COMMIT_SHA=$(jq -r .after $GITHUB_EVENT_PATH)
           COMMIT_DETAILS=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
             "https://api.github.com/repos/${{ github.repository }}/commits/$COMMIT_SHA")
-          ORIGINAL_COMMIT_MESSAGE=$(echo $COMMIT_DETAILS | jq -r .commit.message)
-          ORIGINAL_COMMIT_AUTHOR=$(echo $COMMIT_DETAILS | jq -r .commit.author.name)
-          ORIGINAL_COMMIT_DESCRIPTION=$(echo $COMMIT_DETAILS | jq -r .commit.message)
-          EXTENDED_DESCRIPTION=$(echo $COMMIT_DETAILS | jq -r .commit.message)
+          ORIGINAL_COMMIT_MESSAGE=$(echo "$COMMIT_DETAILS" | jq -r .commit.message | awk 'BEGIN {RS=""; FS="\n"} {print $1}')
+          EXTENDED_DESCRIPTION=$(echo "$COMMIT_DETAILS" | jq -r .commit.message | awk 'BEGIN {RS=""; FS="\n"} {for (i=2; i<=NF; i++) print $i}')
+          ORIGINAL_COMMIT_AUTHOR=$(echo "$COMMIT_DETAILS" | jq -r .commit.author.name)
           echo "::set-output name=sha::$COMMIT_SHA"
           echo "::set-output name=message::$ORIGINAL_COMMIT_MESSAGE"
-          echo "::set-output name=description::$ORIGINAL_COMMIT_DESCRIPTION"
           echo "::set-output name=extended_description::$EXTENDED_DESCRIPTION"
           echo "::set-output name=author::$ORIGINAL_COMMIT_AUTHOR"
 
@@ -56,8 +55,8 @@ jobs:
           MODIFIED_FILES=$(echo $COMMIT_DETAILS | jq -r '.files[].filename')
           ADDED_BYTES=$(echo $COMMIT_DETAILS | jq '[.files[].additions] | add')
           REMOVED_BYTES=$(echo $COMMIT_DETAILS | jq '[.files[].deletions] | add')
-          ADDED_KB=$(echo "scale=2; $ADDED_BYTES / 1024" | bc | sed 's/\./,/')
-          REMOVED_KB=$(echo "scale=2; $REMOVED_BYTES / 1024" | bc | sed 's/\./,/')
+          ADDED_KB=$(printf "%.2f" $(echo "scale=2; $ADDED_BYTES / 1024" | bc) | sed 's/\./,/')
+          REMOVED_KB=$(printf "%.2f" $(echo "scale=2; $REMOVED_BYTES / 1024" | bc) | sed 's/\./,/')
           ADDED_LINES=$(echo $COMMIT_DETAILS | jq '[.files[].additions] | add')
           REMOVED_LINES=$(echo $COMMIT_DETAILS | jq '[.files[].deletions] | add')
           echo "Modified files: $MODIFIED_FILES"
