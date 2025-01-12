@@ -1,6 +1,7 @@
 
-
 name: not
+
+
 
 on:
   push:
@@ -19,11 +20,6 @@ jobs:
         run: |
           if [ ! -f keyword_commit_counts.json ]; then
             echo '{"design":0,"gameplay":0,"narrativa":0,"performance":0,"audio":0}' > keyword_commit_counts.json
-            git config --global user.name "GitHub Actions"
-            git config --global user.email "actions@github.com"
-            git add keyword_commit_counts.json
-            git commit -m "Create keyword_commit_counts.json"
-            git push
           fi
           ls -l keyword_commit_counts.json # Verifica i permessi del file
           cat keyword_commit_counts.json # Verifica la creazione del file
