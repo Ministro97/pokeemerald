@@ -109,7 +109,7 @@ jobs:
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
           escape_markdown() {
-            echo "$1" | sed 's/\&/\\&/g; s/\*/\\*/g; s/\_/\\_/g; s/\`/\\`/g; s/\[/\\[/g; s/\]/\\]/g; s/\(/\\(/g; s/\)/\\)/g; s/\~/\\~/g; s/\!/\\!/g; s/\-/\\-/g; s/\=/\\=/g; s/\+/\\+/g; s/\{/\\{/g; s/\}/\\}/g; s/\./\\./g; s/\!/\\!/g; s/\"/\\"/g; s/\'/\\'/g'
+            echo "$1" | sed 's/\&/\\&/g; s/\*/\\*/g; s/\_/\\_/g; s/\`/\\`/g; s/\[/\\[/g; s/\]/\\]/g; s/\(/\\(/g; s/\)/\\)/g; s/\~/\\~/g; s/\!/\\!/g; s/\-/\\-/g; s/\=/\\=/g; s/\+/\\+/g; s/\{/\\{/g; s/\}/\\}/g; s/\./\\./g; s/\"/\\"/g; s/\'/\\'/g'
           }
           ORIGINAL_COMMIT_SHA="${{ steps.original_commit.outputs.sha }}"
           ORIGINAL_COMMIT_MESSAGE=$(escape_markdown "${{ steps.original_commit.outputs.message }}")
