@@ -1,4 +1,5 @@
-name: notify telegramm
+
+name: notify telegram 
 
 
 
@@ -14,6 +15,12 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
+
+      - name: Ensure keyword commit counts file exists
+        run: |
+          if [ ! -f keyword_commit_counts.json ]; then
+            echo '{"design":0,"gameplay":0,"narrativa":0,"performance":0,"audio":0}' > keyword_commit_counts.json
+          fi
 
       - name: Get original commit details
         id: original_commit
@@ -61,12 +68,7 @@ jobs:
       - name: Read keyword commit counts
         id: read_counts
         run: |
-          if [ -f keyword_commit_counts.json ]; then
-            COUNTS=$(cat keyword_commit_counts.json)
-          else
-            COUNTS='{"design":0,"gameplay":0,"narrativa":0,"performance":0,"audio":0}'
-            echo $COUNTS > keyword_commit_counts.json
-          fi
+          COUNTS=$(cat keyword_commit_counts.json)
           echo "::set-output name=counts::$COUNTS"
 
       - name: Get commit count with keywords
