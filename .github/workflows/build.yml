@@ -81,7 +81,7 @@ jobs:
           COMMIT_COUNT_PERFORMANCE=$(git log --grep="performance" -i --oneline | wc -l)
           COMMIT_COUNT_AUDIO=$(git log --grep="audio" -i --oneline | wc -l)
           NEW_COUNTS=$(echo $COUNTS | jq --argjson design $COMMIT_COUNT_DESIGN --argjson gameplay $COMMIT_COUNT_GAMEPLAY --argjson narrativa $COMMIT_COUNT_NARRATIVA --argjson performance $COMMIT_COUNT_PERFORMANCE --argjson audio $COMMIT_COUNT_AUDIO '.design += ($design | tonumber) | .gameplay += ($gameplay | tonumber) | .narrativa += ($narrativa | tonumber) | .performance += ($performance | tonumber) | .audio += ($audio | tonumber)')
-          echo $NEW_COUNTS > keyword_commit_counts.json
+          echo $NEW_COUNTS > data.json
           echo "::set-output name=new_counts::$NEW_COUNTS"
 
       - name: Get commit author
@@ -101,7 +101,7 @@ jobs:
           ORIGINAL_COMMIT_MESSAGE="${{ steps.original_commit.outputs.message }}"
           ORIGINAL_COMMIT_DESCRIPTION="${{ steps.original_commit.outputs.description }}"
           ORIGINAL_COMMIT_AUTHOR="${{ steps.original_commit.outputs.author }}"
-          COUNTS=$(cat keyword_commit_counts.json)
+          COUNTS=$(cat data.json)
           COMMIT_COUNT_DESIGN=$(echo $COUNTS | jq '.design')
           COMMIT_COUNT_GAMEPLAY=$(echo $COUNTS | jq '.gameplay')
           COMMIT_COUNT_NARRATIVA=$(echo $COUNTS | jq '.narrativa')
