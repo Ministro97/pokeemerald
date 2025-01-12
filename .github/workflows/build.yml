@@ -1,5 +1,5 @@
 
-name: notify telegram 
+name: notify telegram
 
 
 
@@ -18,8 +18,8 @@ jobs:
 
       - name: Ensure keyword commit counts file exists
         run: |
-          if [ ! -f keyword_commit_counts.json ]; then
-            echo '{"design":0,"gameplay":0,"narrativa":0,"performance":0,"audio":0}' > keyword_commit_counts.json
+          if [ ! -f data.json ]; then
+            echo '{"design":0,"gameplay":0,"narrativa":0,"performance":0,"audio":0}' > data.json
           fi
 
       - name: Get original commit details
@@ -68,7 +68,7 @@ jobs:
       - name: Read keyword commit counts
         id: read_counts
         run: |
-          COUNTS=$(cat keyword_commit_counts.json)
+          COUNTS=$(cat data.json)
           echo "::set-output name=counts::$COUNTS"
 
       - name: Get commit count with keywords
