@@ -1,5 +1,4 @@
 
-
 name: notify TG
 
 on:
@@ -49,7 +48,7 @@ jobs:
           REPO="${{ github.repository }}"
           COMMIT_DETAILS=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
             "https://api.github.com/repos/$REPO/commits/$COMMIT_SHA")
-          MODIFIED_FILES=$(echo $COMMIT_DETAILS | jq -r '.files[].filename' | sed 's/_/\\_/g')
+          MODIFIED_FILES=$(echo $COMMIT_DETAILS | jq -r '.files[].filename' | sed 's/_/\\_/g' | tr '\n' ' ')
           ADDED_BYTES=$(echo $COMMIT_DETAILS | jq '[.files[].additions] | add')
           REMOVED_BYTES=$(echo $COMMIT_DETAILS | jq '[.files[].deletions] | add')
           ADDED_KB=$(printf "%.2f" $(echo "scale=2; $ADDED_BYTES / 1024" | bc) | sed 's/\./,/')
