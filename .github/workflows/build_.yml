@@ -125,7 +125,7 @@ jobs:
           REMOVED_LINES="${{ steps.modified_files.outputs.removed_lines }}"
           ESCAPED_MESSAGE=$(echo "$ORIGINAL_COMMIT_MESSAGE" | sed 's/"/\\"/g' | sed "s/'/\\'/g" | sed 's/&/\\&/g')
           ESCAPED_DESCRIPTION=$(echo "$ORIGINAL_COMMIT_DESCRIPTION" | sed 's/"/\\"/g' | sed "s/'/\\'/g" | sed 's/&/\\&/g')
-          MESSAGE=$(printf "📢 *Nuovo commit in Pokémon XX*\n\n\n*ID:* \`$ORIGINAL_COMMIT_SHA\`\n\n*Autore:* $ORIGINAL_COMMIT_AUTHOR\n\n*Componente:* $ESCAPED_MESSAGE\n\n*Descrizione:* $ESCAPED_DESCRIPTION\n\n*File committati:*\n$MODIFIED_FILES\n\n*Dati aggiunti:* $ADDED_KB KB\n\n*Dati rimossi:* $REMOVED_KB KB\n\n*Linee aggiunte:* $ADDED_LINES\n\n*Linee rimosse:* $REMOVED_LINES\n\n*Totale commit per componente:*\n- Design: $COMMIT_COUNT_DESIGN\n- Gameplay: $COMMIT_COUNT_GAMEPLAY\n- Narrativa: $COMMIT_COUNT_NARRATIVA\n- Performance: $COMMIT_COUNT_PERFORMANCE\n- Audio: $COMMIT_COUNT_AUDIO")
+          MESSAGE=$(printf "📢 *Nuovo commit in Pokémon XX*\n\n\n*Hash:* \`$ORIGINAL_COMMIT_SHA\`\n\n*Autore:* $ORIGINAL_COMMIT_AUTHOR\n\n*Componente:* $ESCAPED_MESSAGE\n\n*Descrizione:* $ESCAPED_DESCRIPTION\n\n*File committati:*\n$MODIFIED_FILES\n\n*Dati aggiunti:* $ADDED_KB KB\n\n*Dati rimossi:* $REMOVED_KB KB\n\n*Linee aggiunte:* $ADDED_LINES\n\n*Linee rimosse:* $REMOVED_LINES\n\n*Totale commit per componente:*\n- Design: $COMMIT_COUNT_DESIGN\n- Gameplay: $COMMIT_COUNT_GAMEPLAY\n- Narrativa: $COMMIT_COUNT_NARRATIVA\n- Performance: $COMMIT_COUNT_PERFORMANCE\n- Audio: $COMMIT_COUNT_AUDIO")
           BUTTON_URL="https://example.com" # Sostituisci con il link desiderato
           BUTTON_TEXT="Clicca qui per maggiori dettagli"
           MAX_MESSAGE_LENGTH=4096
