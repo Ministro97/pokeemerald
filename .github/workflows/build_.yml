@@ -118,7 +118,8 @@ jobs:
           COMMIT_COUNT_NARRATIVA=$(echo $COUNTS | jq '.narrativa')
           COMMIT_COUNT_PERFORMANCE=$(echo $COUNTS | jq '.performance')
           COMMIT_COUNT_AUDIO=$(echo $COUNTS | jq '.audio')
-          MODIFIED_FILES="${{ steps.modified_files.outputs.files }}"
+          ')
+          MODIFIED_FILES=$(echo "${{ steps.modified_files.outputs.files }}" | tr ' ' '\n')
           ADDED_KB="${{ steps.modified_files.outputs.added_kb }}"
           REMOVED_KB="${{ steps.modified_files.outputs.removed_kb }}"
           ADDED_LINES="${{ steps.modified_files.outputs.added_lines }}"
