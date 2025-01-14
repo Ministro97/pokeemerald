@@ -1,5 +1,5 @@
 _ cciao__
-4. Certain packages are required to build pokeemerald. Install these packages by running the following command:
+4. Certain packages are required t1o build pokeemerald. Install these packages by running the following command:
 
     ```bash
     sudo apt install build-essential binutils-arm-none-eabi git libpng-dev
